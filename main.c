@@ -170,9 +170,6 @@ void reduce_tree(const void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 	int child_l = 2 * rank + 1;		// left child
 	int child_r = 2 * rank + 2;		// right child
 	
-	if (child_l > p && child_r > p) // if node is leaf, send to parent	
-		MPI_Send(sendbuf, count, datatype, parent, 0, comm);
-	
 	if (child_l < p) // receive and sum left child data to own data
 	{	
 		MPI_Recv(tmp, count, datatype, child_l, 0, comm, MPI_STATUS_IGNORE);
@@ -189,10 +186,11 @@ void reduce_tree(const void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 			local_sum[i] += tmp[i];
 	}
 
-	if (rank != root_process) // node has received data from children and summed, now send up
+	// Most importantly, leaf nodes send here :P 
+	if (rank != 0) // node has received data from children and summed, now send up // HARD CODED TO ONLY WORK FOR 0!! 
 		MPI_Send(local_sum, count, datatype, parent, 0, comm);
 
-	if (rank == root_process)
+	if (rank == 0)
 	{	
 		int* out = (int*)recvbuf;
 
